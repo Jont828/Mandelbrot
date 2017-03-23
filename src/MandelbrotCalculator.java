@@ -4,13 +4,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class MandelbrotCalculator {
-	
-	int colors[][];
-	Color color;
-	
-	private static final int MAX_ITERATIONS = 200;//199;
-	
-	private int imgWidth;
+
+ 	private int imgWidth;
 	private int imgHeight;
 	
     private double zoomFactor;
@@ -25,7 +20,12 @@ public class MandelbrotCalculator {
     
     private boolean done;
     
-    MandelbrotGraphics graphics;
+    private MandelbrotGraphics graphics;
+    private MandelbrotRunnable threads[];
+    
+    private ExecutorService exec;
+    
+    private static final int NUM_THREADS = 8;
 
 	public MandelbrotCalculator(MandelbrotGraphics g) {
 		
@@ -33,85 +33,36 @@ public class MandelbrotCalculator {
 	    zoomFactor = 0.35;
 	    centerX = oldCenterX = -0.7;// 0.3485;
 	    centerY = oldCenterY = 0;//-0.5015;
-		
-	    initColorArray();
 
 		imgWidth = graphics.getImageWidth();
 		imgHeight = graphics.getImageHeight();
 		
+		MandelbrotRunnable.setMandelbrotGraphics(graphics);
+		threads = new MandelbrotRunnable[NUM_THREADS];
+		
+		for(int i=0; i<threads.length; i++) {
+			threads[i] = new MandelbrotRunnable();
+		}
+		
+		exec = Executors.newFixedThreadPool(NUM_THREADS);
+		
 	}
 
-	private static double compMultReal(double a, double b, double c, double d) {
-		return (a * c) - (b * d);
-	}
 	
-	private static double compMultImag(double a, double b, double c, double d) {
-		return (a * d) + (b * c);
-	}
+//	private boolean outcircle(double center_x, double center_y, double r, double x, double y)
+//	{ // checks if (x,y) is outside the circle around (center_x,center_y) with radius r
+//	        x -= center_x;
+//	        y -= center_y;
+//	        if (x * x + y * y > r * r)
+//	                return(true);
+//	        return(false);
+//
+//	 // skip values we know they are inside
+//	        if ((outcircle(-0.11, 0.0, 0.63, x, y) || x > 0.1) && outcircle(-1.0, 0.0, 0.25, x, y) && outcircle(-0.125, 0.744, 0.092, x, y) && outcircle(-1.308, 0.0, 0.058, x, y) && outcircle(0.0, 0.25, 0.35, x, y)) {
+//	                          // code for iteration
+//        	}
+//	}
 	
-	private int mandelbrotTest(double a, double bi) {
-		
-		double atmp, btmp;
-		int number = 0;
-		double z = 0, zi = 0;
-		
-		while ( (number != MAX_ITERATIONS) && (compMagnitude(z,zi) < 2.0)) { // formerly number != 200
-			number++;
-			atmp = compMultReal(z,zi,z,zi);
-			btmp = compMultImag(z,zi,z,zi);
-			
-			z = atmp;
-			zi = btmp;
-			
-			z += a;
-			zi += bi; 			
-			
-			// if (number < 10)
-				//System.out.println(number + "("+ z + "," + zi + ")");
-		}
-		
-		if (number == MAX_ITERATIONS) { // formerly number != 200
-			// System.out.println("Part of the Mandelbrot set!");			
-			return -1;
-		} else {
-			// System.out.print(" " + number);
-			return number;
-		}
-	}
-	
-	private int mandelbrotTestParallel(double a, double bi) {
-		
-		double atmp, btmp;
-		int number = 0;
-		double z = 0,zi = 0;
-		
-		while ( (number != MAX_ITERATIONS) && (compMagnitude(z,zi) < 2.0)) { // formerly number != 200
-			number++;
-			atmp = compMultReal(z,zi,z,zi);
-			btmp = compMultImag(z,zi,z,zi);
-			
-			z = atmp;
-			zi = btmp;
-			
-			z += a;
-			zi += bi; 			
-			
-			// if (number < 10)
-				//System.out.println(number + "("+ z + "," + zi + ")");
-		}
-		
-		if (number == MAX_ITERATIONS) { // formerly number != 200
-			// System.out.println("Part of the Mandelbrot set!");			
-			return -1;
-		} else {
-			// System.out.print(" " + number);
-			return number;
-		}
-	}
-	
-	private static double compMagnitude(double a, double b) {
-		return Math.sqrt( a * a + b * b );
-	}
 	
 	private void recalculateCenter(int x, int y) {
 		oldCenterX = centerX;
@@ -156,99 +107,70 @@ public class MandelbrotCalculator {
 	}
 	
 	public void run() {
-		draw();
-//		drawParallel();
+//		draw();
+		drawParallel();
+	}
+	
+	public void drawParallelExec() {
+		
+		done = false;
+		long start = System.nanoTime();
+		
+		double graphWidth = 1.0 / zoomFactor;
+		double graphHeight = 1.0 / zoomFactor;
+		
+		if(imgWidth > imgHeight) {
+			graphWidth *= imgWidth / (double) imgHeight;
+		} else {
+			graphHeight *= imgHeight / (double) imgWidth;
+		}
+		
+        XMIN = centerX - graphWidth / 2;
+        XMAX = centerX + graphWidth / 2;
+        YMIN = centerY - graphHeight / 2;
+        YMAX = centerY + graphHeight / 2;
+        
+        MandelbrotRunnable.initConstants(XMIN, XMAX, YMIN, YMAX);
+        		
+		int total = (int) imgHeight * imgWidth;
+		int segmentLen = (int) Math.ceil(total / NUM_THREADS);
+		
+		int startRow = 0;
+		int startCol = 0;
+		int endRow = 0;
+		int endCol = 0;
+        
+		for(int i=0; i<NUM_THREADS; i++) {
+
+			startRow = endRow;
+			startCol = endCol;
+			
+			endCol += segmentLen;
+			
+			while(endCol > imgWidth ) {
+				endCol -= imgWidth;
+				endRow++;
+				
+			}
+			threads[i].setBounds(startRow, startCol, endRow, endCol);
+		}
+        
+		for(MandelbrotRunnable l : threads)
+			l.run();
+		
+        graphics.update();
+        done = true;
+        long end = System.nanoTime();
+        
+        System.out.println("Draw time = " + (end - start) / 1000000000d + "seconds");
 	}
 	
 	
 	public void drawParallel() {
 		
-		
-	}
-	
-	public void drawParallelBroken() {
-		final int NTHREADS = 10;
-		
-		final int segmentLen = imgHeight / NTHREADS;
-		
-		ExecutorService exec = Executors.newFixedThreadPool(NTHREADS-1);
-		
-		int offset = 0;
-		
-		for(int i=0; i<imgWidth; i++) {
-			for(int j=0; j<NTHREADS-1; j++) {
-				
-				int iInner = i;
-				int from = offset;
-				int to = offset + segmentLen-1;
-				
-				exec.execute(new Runnable() {
-				
-					@Override
-					public void run(){
-						drawParallelHelper(iInner, from, to);
-					}
-				});
-				
-				offset += segmentLen;
-				
-			}
-		}
-		
-		exec.shutdown();
-		
-		try {
-			exec.awaitTermination(10, TimeUnit.SECONDS);
-		} catch(InterruptedException ignore) {
-			
-		}
-		
-		graphics.update();
-		done = true;
-		
-	}
-	
-	public void drawParallelHelper(int i, int fromj, int toj) {
-		
-		double graphWidth = 1.0 / zoomFactor;
-		double graphHeight = 1.0 / zoomFactor;
-		
-		if(imgWidth > imgHeight) {
-			graphWidth *= imgWidth / (double) imgHeight;
-		} else {
-			graphHeight *= imgHeight / (double) imgWidth;
-		}
-		
-        XMIN = centerX - graphWidth / 2;
-        XMAX = centerX + graphWidth / 2;
-        YMIN = centerY - graphHeight / 2;
-        YMAX = centerY + graphHeight / 2;
-		
-	
-    	for(int j=fromj; j<toj; j++) {
-    		
-    		double cx = XMIN + i * (XMAX - XMIN) / imgWidth;
-    		double cy = YMIN + j * (YMAX - YMIN) / imgHeight;
-    		int numIterations = mandelbrotTest(cx, cy);	    		
-    		
-    		if(numIterations == -1) {
-    			graphics.setPixel(i, j, new int[]{0, 0, 0});
-    		} else {
-	    		graphics.setPixel(i, j, getColor(numIterations));
-    		}
-    	
-        }
-		
-	}
-	
-	private void draw() {
-		
 		done = false;
+		long start = System.nanoTime();
 		
-//		System.out.println("Drawing Mandelbrot");
-//		System.out.println(center_x + "\t" + center_y);
-		
-//        double squareWidth = 1.0 / zoomFactor;
 		double graphWidth = 1.0 / zoomFactor;
 		double graphHeight = 1.0 / zoomFactor;
 		
@@ -262,90 +184,50 @@ public class MandelbrotCalculator {
         XMAX = centerX + graphWidth / 2;
         YMIN = centerY - graphHeight / 2;
         YMAX = centerY + graphHeight / 2;
+        
+        MandelbrotRunnable.initConstants(XMIN, XMAX, YMIN, YMAX);
+        		
+		int total = (int) imgHeight * imgWidth;
+		int segmentLen = (int) Math.ceil(total / NUM_THREADS);
+		
+		int startRow = 0;
+		int startCol = 0;
+		int endRow = 0;
+		int endCol = 0;
+        
+		for(int i=0; i<threads.length; i++) {
 
-        for(int i=0; i<imgWidth; i++) {
-        	
-        	for(int j=0; j<imgHeight; j++) {
-	    		
-	    		double cx = XMIN + i * (XMAX - XMIN) / imgWidth;
-	    		double cy = YMIN + j * (YMAX - YMIN) / imgHeight;
-	    		int numIterations = mandelbrotTest(cx, cy);	    		
-	    		
-	    		if(numIterations == -1) {
-	    			graphics.setPixel(i, j, new int[]{0, 0, 0});
-	    		} else {
-		    		graphics.setPixel(i, j, getColor(numIterations));
-	    		}
-
-	    	}
-        	
-        }
+			startRow = endRow;
+			startCol = endCol;
+			
+			endCol += segmentLen;
+			
+			while(endCol > imgWidth ) {
+				endCol -= imgWidth;
+				endRow++;
+				
+//				if(endRow == graphics.getImageHeight() - 1) {
+//					endCol = graphics.getImageWidth();
+//				}
+			}
+			threads[i].setBounds(startRow, startCol, endRow, endCol);
+		}
         
         
+        
+        
+		for(MandelbrotRunnable l : threads)
+			l.run();
+		
         graphics.update();
         done = true;
-	}
-	
-	private int[] getColor(int numIterations) {
-		
-		double offset = 0;
-		
-		int offsetInt = (int) ( offset * MAX_ITERATIONS );
-//		System.out.println(offsetInt);
-		int colorInt = ( numIterations + offsetInt ) % MAX_ITERATIONS;
-				
-		float hsbColor = colorInt / (float) MAX_ITERATIONS;
-		
-		color = Color.getHSBColor(hsbColor, 0.8f, 1);
-		
-		int rgb[] = new int[3];
-		
-		rgb[0] = color.getRed();
-		rgb[1] = color.getGreen();
-		rgb[2] = color.getBlue();
-		
-		return rgb;
+        long end = System.nanoTime();
+        
+        System.out.println("Draw time = " + (end - start) / 1000000000d + "seconds");
 	}
 	
 	public boolean isDone() {
 		return done;
-	}
-	
-	private void initColorArray() {
-		
-		colors = new int[200][3];
-		int c = 255;
-		for (int i = 0 ; i < 50 ; i++) {
-			int[] color = new int[3];
-			color[0] = 0; color[1] = 255 - c; color[2] = c;
-			colors[i] = color;
-			c -= 5;
-		}
-
-
-		c = 255;
-		for (int i = 50 ; i < 100 ; i++) {
-			int[] color = new int[3];
-			color[0] = 255 - c; color[1] = 255; color[2] = 0;
-			colors[i] = color;
-			c -= 5;
-		}
-
-		c = 255;
-		for (int i = 100 ; i < 150 ; i++) {
-			int[] color = new int[3];
-			color[0] = c; color[1] = c; color[2] = 255 - c;
-			colors[i] = color;
-			c -= 5;
-		}
-		
-		c = 255;
-		for (int i = 150 ; i < 200 ; i++) {
-			int[] color = new int[3];
-			color[0] = 255 - c; color[1] = 0; color[2] = 255;
-			colors[i] = color;
-			c -= 5;
-		}
 	}
 	
 }

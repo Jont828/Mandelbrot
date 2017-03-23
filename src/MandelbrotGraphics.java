@@ -1,3 +1,4 @@
+import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -8,6 +9,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -34,10 +36,22 @@ public class MandelbrotGraphics implements ActionListener {
 		
 		frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setTitle("Mandelbrot Test");
         frame.setResizable(false);
-        frame.setSize(imgWidth, imgHeight);
         
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        if(imgWidth > screenSize.width) {
+        	imgWidth = screenSize.width;
+        }
+        
+        if(imgHeight > screenSize.height) {
+        	imgHeight = screenSize.height;
+        }
+        frame.setSize(imgWidth, imgHeight);
+        frame.setTitle("Mandelbrot Set (left click to zoom in and right click to zoom out): " + imgWidth + "x" + imgHeight);
+        
+		System.out.println(imgWidth + "\t" + imgHeight);
+
+		
         image = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_RGB);
         frame.setContentPane(new JLabel(new ImageIcon(image)));
         
@@ -79,6 +93,14 @@ public class MandelbrotGraphics implements ActionListener {
 		frame.repaint();
 	}
 	
+//	public void pack() {
+//		frame.pack();
+//		imgWidth = frame.getContentPane().getWidth();
+//		imgHeight = frame.getContentPane().getHeight();
+//		
+//		System.out.println(imgWidth + "\t" + imgHeight);
+//	}
+	
     private void save(String filename) {
         if (filename == null) throw new IllegalArgumentException("argument to save() is null");
         save(new File(filename));
@@ -88,7 +110,7 @@ public class MandelbrotGraphics implements ActionListener {
     private void save(File file) {
         if (file == null) throw new IllegalArgumentException("argument to save() is null");
         String filename = file.getName();
-        if (frame != null) frame.setTitle(filename);
+//        if (frame != null) frame.setTitle(filename);
         String suffix = filename.substring(filename.lastIndexOf('.') + 1);
         if ("jpg".equalsIgnoreCase(suffix) || "png".equalsIgnoreCase(suffix)) {
             try {

@@ -40,6 +40,7 @@ public class Mandelbrot implements MouseListener {
 	public Mandelbrot(int width, int height) {
 		
 		graphics = new MandelbrotGraphics(width, height);
+		
 		graphics.addMouseListener(this);
 		
         calc = new MandelbrotCalculator(graphics);
