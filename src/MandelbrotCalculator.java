@@ -107,6 +107,7 @@ public class MandelbrotCalculator {
 	}
 	
 	public void run() {
+
 //		draw();
 		drawParallel();
 	}
@@ -162,7 +163,7 @@ public class MandelbrotCalculator {
         done = true;
         long end = System.nanoTime();
         
-        System.out.println("Draw time = " + (end - start) / 1000000000d + "seconds");
+        System.out.println("Draw time = " + (end - start) / 1000000000d + " seconds");
 	}
 	
 	
@@ -214,16 +215,19 @@ public class MandelbrotCalculator {
 		}
         
         
-        
-        
 		for(MandelbrotRunnable l : threads)
 			l.run();
+		
+		graphics.setText("<html>Zoom = " + zoomFactor + 
+				"<br>x = [" + XMIN + ", " + XMAX + "]" +
+				"<br>y = [" + YMIN + ", " + YMAX + "]" + 
+				"<br>Center = (" + centerX + ", " + centerY + ")</html>");
 		
         graphics.update();
         done = true;
         long end = System.nanoTime();
         
-        System.out.println("Draw time = " + (end - start) / 1000000000d + "seconds");
+        System.out.println("Draw time = " + (end - start) / 1000000000d + " seconds");
 	}
 	
 	public boolean isDone() {

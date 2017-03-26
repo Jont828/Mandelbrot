@@ -85,6 +85,31 @@ public class MandelbrotRunnable implements Runnable {
 		}
 	}
 	
+	private int juliaTest(double z, double zi) {
+		
+		double atmp, btmp;
+		int number = 0;
+		double a = 0, bi = 0;
+		
+		while ( (number != MAX_ITERATIONS) && (compSquareSum(z, zi) < 4.0 )) { // or compMagnitude(z, zi) < 2.0
+			number++;
+			atmp = compMultReal(z, zi, z, zi);
+			btmp = compMultImag(z, zi, z, zi);
+			
+			z = atmp;
+			zi = btmp;
+			
+			z += a;
+			zi += bi; 			
+		}
+		
+		if (number == MAX_ITERATIONS) { // formerly number != 200		
+			return -1;
+		} else {
+			return number;
+		}
+	}
+	
 	public void run() {
 		
 		

@@ -1,6 +1,9 @@
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.Font;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -18,12 +21,16 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
 public class MandelbrotGraphics implements ActionListener {
 	
 	private JFrame frame;
+	private JLabel text;
+	private JPanel textWrapper;
 	private BufferedImage image;
+	private JLabel label;
 	private WritableRaster raster;
 	
 	private int imgWidth;
@@ -46,6 +53,10 @@ public class MandelbrotGraphics implements ActionListener {
         if(imgHeight > screenSize.height) {
         	imgHeight = screenSize.height;
         }
+        
+        System.out.println("sc width = " + screenSize.width);
+        System.out.println("sc height = " + screenSize.height);
+
         frame.setSize(imgWidth, imgHeight);
         frame.setTitle("Mandelbrot Set (left click to zoom in and right click to zoom out): " + imgWidth + "x" + imgHeight);
         
@@ -53,7 +64,28 @@ public class MandelbrotGraphics implements ActionListener {
 
 		
         image = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_RGB);
-        frame.setContentPane(new JLabel(new ImageIcon(image)));
+        
+        label = new JLabel(new ImageIcon(image));
+        
+        frame.setContentPane(label);
+
+        
+        textWrapper = new JPanel();
+        
+        text = new JLabel();
+        
+        text.setLocation(25, (int) ( -1 * imgHeight / 2 ) + 40);
+        text.setSize(label.preferredSize());
+        
+        text.setFont(new Font("Courier New", Font.BOLD, 20));
+        text.setForeground(Color.BLACK);
+        textWrapper.add(text);
+        textWrapper.setBackground(new Color(255, 255, 255, 128));
+        
+        label.add(textWrapper);
+
+        
+//        frame.setContentPane(new JLabel(new ImageIcon(image)));
         
         raster = image.getRaster();
         
@@ -69,12 +101,18 @@ public class MandelbrotGraphics implements ActionListener {
         frame.setJMenuBar(menuBar);
 	}
 	
+	public void setText(String s) {
+		if(text != null) {
+			text.setText(s);
+			textWrapper.setSize(textWrapper.preferredSize());
+		}
+	}	
 	public void addMouseListener(MouseListener m) {
 		frame.addMouseListener(m);
 	}
 	
 	public void setPixel(int x, int y, int rgb[]) {
-		raster.setPixel(x, y, rgb);
+		raster.setPixel(x, imgHeight, rgb);
 	}
 	
 	public int getImageWidth() {

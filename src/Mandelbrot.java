@@ -20,9 +20,9 @@ public class Mandelbrot implements MouseListener {
 		
 //		System.out.println("Mouse clicked");
 		
-//		while (!calc.isDone()) {
-//			try { Thread.sleep(1000); } catch (InterruptedException ex) {}
-//		}
+		while (!calc.isDone()) {
+			try { Thread.sleep(1000); } catch (InterruptedException ex) {}
+		}
 		
 		draw();
 		
