@@ -34,8 +34,8 @@ public class MandelbrotCalculator {
 	    centerX = oldCenterX = -0.7;// 0.3485;
 	    centerY = oldCenterY = 0;//-0.5015;
 
-		imgWidth = graphics.getImageWidth();
-		imgHeight = graphics.getImageHeight();
+		imgWidth = graphics.imageWidth();
+		imgHeight = graphics.imageHeight();
 		
 		MandelbrotRunnable.setMandelbrotGraphics(graphics);
 		threads = new MandelbrotRunnable[NUM_THREADS];
@@ -68,8 +68,10 @@ public class MandelbrotCalculator {
 		oldCenterX = centerX;
 		oldCenterY = centerY;
 		
+		int yAdjusted = imgHeight - y - 1; // Since MouseEvent uses the upper left as the origin, we must change it for our coordinate system
+		
 		centerX = centerX + ( 2.0*x - imgWidth) / imgWidth * ( XMAX - XMIN ) / 2.0; 
-		centerY = centerY + ( 2.0*y - imgHeight) / imgHeight * ( YMAX - YMIN ) / 2.0; 
+		centerY = centerY + ( 2.0*yAdjusted - imgHeight) / imgHeight * ( YMAX - YMIN ) / 2.0; 
 	}
 	
 	private void printData() {

@@ -32,8 +32,8 @@ public class MandelbrotRunnable implements Runnable {
 	public static void setMandelbrotGraphics(MandelbrotGraphics g) {
 		graphics = g;
 		
-		imgWidth = graphics.getImageWidth();
-		imgHeight = graphics.getImageHeight();
+		imgWidth = graphics.imageWidth();
+		imgHeight = graphics.imageHeight();
 	}
 	
 	public void setBounds(int sr, int sc, int er, int ec) {
@@ -112,6 +112,8 @@ public class MandelbrotRunnable implements Runnable {
 	
 	public void run() {
 		
+		// Rows = y increment
+		// Columns = x increment
 		
 		double complexX;
 		double complexY;

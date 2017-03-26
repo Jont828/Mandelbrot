@@ -27,11 +27,13 @@ import javax.swing.KeyStroke;
 public class MandelbrotGraphics implements ActionListener {
 	
 	private JFrame frame;
-	private JLabel text;
-	private JPanel textWrapper;
+	private JLabel textLabel;
+	private JPanel textLabelWrapper;
 	private BufferedImage image;
-	private JLabel label;
+	private JLabel mainLabel;
 	private WritableRaster raster;
+	
+	private boolean originIsUpperLeft = true;
 	
 	private int imgWidth;
 	private int imgHeight;
@@ -65,28 +67,25 @@ public class MandelbrotGraphics implements ActionListener {
 		
         image = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_RGB);
         
-        label = new JLabel(new ImageIcon(image));
+        mainLabel = new JLabel(new ImageIcon(image));
         
-        frame.setContentPane(label);
+        frame.setContentPane(mainLabel);
 
         
-        textWrapper = new JPanel();
+        textLabelWrapper = new JPanel();
         
-        text = new JLabel();
+        textLabel = new JLabel();
         
-        text.setLocation(25, (int) ( -1 * imgHeight / 2 ) + 40);
-        text.setSize(label.preferredSize());
+        textLabel.setLocation(25, (int) ( -1 * imgHeight / 2 ) + 40);
+        textLabel.setSize(mainLabel.preferredSize());
         
-        text.setFont(new Font("Courier New", Font.BOLD, 20));
-        text.setForeground(Color.BLACK);
-        textWrapper.add(text);
-        textWrapper.setBackground(new Color(255, 255, 255, 128));
+        textLabel.setFont(new Font("Courier New", Font.BOLD, 20));
+        textLabel.setForeground(Color.BLACK);
+        textLabelWrapper.add(textLabel);
+        textLabelWrapper.setBackground(new Color(255, 255, 255, 128));
         
-        label.add(textWrapper);
+        mainLabel.add(textLabelWrapper);
 
-        
-//        frame.setContentPane(new JLabel(new ImageIcon(image)));
-        
         raster = image.getRaster();
         
         
@@ -102,9 +101,9 @@ public class MandelbrotGraphics implements ActionListener {
 	}
 	
 	public void setText(String s) {
-		if(text != null) {
-			text.setText(s);
-			textWrapper.setSize(textWrapper.preferredSize());
+		if(textLabel != null) {
+			textLabel.setText(s);
+			textLabelWrapper.setSize(textLabelWrapper.preferredSize());
 		}
 	}	
 	public void addMouseListener(MouseListener m) {
@@ -112,14 +111,19 @@ public class MandelbrotGraphics implements ActionListener {
 	}
 	
 	public void setPixel(int x, int y, int rgb[]) {
-		raster.setPixel(x, imgHeight, rgb);
+		
+		if(originIsUpperLeft) {
+			raster.setPixel(x, y, rgb);
+		} else {
+			raster.setPixel(x, imgHeight-y-1, rgb);
+		}
 	}
 	
-	public int getImageWidth() {
+	public int imageWidth() {
 		return imgWidth;
 	}
 	
-	public int getImageHeight() {
+	public int imageHeight() {
 		return imgHeight;
 	}
 	
@@ -129,6 +133,14 @@ public class MandelbrotGraphics implements ActionListener {
 	
 	public void update() {
 		frame.repaint();
+	}
+	
+	public void setOriginToUpperLeft() {
+		originIsUpperLeft = true;
+	}
+	
+	public void setOriginToBottomLeft() {
+		originIsUpperLeft = false;
 	}
 	
 //	public void pack() {
@@ -171,6 +183,7 @@ public class MandelbrotGraphics implements ActionListener {
         if (chooser.getFile() != null) {
             save(chooser.getDirectory() + File.separator + chooser.getFile());
         }
+        
     }
 	
 }

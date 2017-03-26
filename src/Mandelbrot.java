@@ -48,6 +48,7 @@ public class Mandelbrot implements MouseListener {
 	
 	public void draw() {
 		
+		graphics.setOriginToBottomLeft();
         calc.start();
         graphics.setVisible(true);
 	}
