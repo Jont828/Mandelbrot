@@ -31,8 +31,8 @@ public class MandelbrotCalculator {
 		
 		graphics = g;
 	    zoomFactor = 0.35;
-	    centerX = oldCenterX = -0.7;// 0.3485;
-	    centerY = oldCenterY = 0;//-0.5015;
+	    centerX = oldCenterX = -0.75;
+	    centerY = oldCenterY = 0;
 
 		imgWidth = graphics.imageWidth();
 		imgHeight = graphics.imageHeight();

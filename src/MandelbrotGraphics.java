@@ -82,7 +82,7 @@ public class MandelbrotGraphics implements ActionListener {
         textLabel.setFont(new Font("Courier New", Font.BOLD, 20));
         textLabel.setForeground(Color.BLACK);
         textLabelWrapper.add(textLabel);
-        textLabelWrapper.setBackground(new Color(255, 255, 255, 128));
+        textLabelWrapper.setBackground(new Color(255, 255, 255, (int) (255*0.75)));
         
         mainLabel.add(textLabelWrapper);
 
